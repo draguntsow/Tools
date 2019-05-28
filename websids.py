@@ -5,12 +5,28 @@ from consolemenu.items import FunctionItem, SubmenuItem, ExternalItem
 
 class Project(object):
 
-    def __init__(self, name, description=''):
+    def __init__(self, name='', description=''):
         self.name = name
         self.description = description
         self.related = []
         self.notes = []
         self.structure = {}
+
+    def save(self):
+        with open(self.name+'_websidis.json', 'w') as file_project:
+            project = {'name':self.name, 'description':self.description, 
+                       'related':self.related, 'notes':self.notes, 'structure':self.structure}
+
+            json.dump(project, file_project)
+
+    def load(self, path):
+        with open(path) as file_project:
+            project = json.load(file_project)
+            self.name = project['name']
+            self.description = project['description']
+            self.related = project['related']
+            self.notes = project['notes']
+            self.structure = project['structure']
 
     def add(self, where, what):
         if where == 'note':
@@ -82,33 +98,99 @@ class Project(object):
         return toShow
 
 
+#this is not related to the framework itself and is only needed to enpower console interface
 class ConsoleInterfaceWrapper(object):
-    def wrap(self, funct):
-        pass
+
+    def __init__(self, project):
+        self.project = project
+
+    def wrapAddNote(self):
+        text = input('Text:')
+        self.project.add('note', text)
+
+    def wrapAddRelated(self):
+        text = input('URL:')
+        self.project.add('related', text)
+
+    def wrapRemNote(self):
+        print(self.project.show('notes'))
+        text = input('Note ID:')
+        self.project.rem('note', text)
+
+    def wrapRemRelated(self):
+        print(self.project.show('related'))
+        text = input('URL ID:')
+        self.project.rem('related', text)
+
+    def wrapChangeMeta(self):
+        name = input('Name: ')
+        description = input('Description: ')
+        self.project.change(name, description)
+
+    def wrapAddPage(self):
+        url = input("URL: ")
+        self.project.addPage(url)
+
+    def wrapRemPage(self):
+        print(self.project.show('structure'))
+        url = input("URL ID: ")
+        self.project.remPage(url)
+
+    def wrapAddArg(self):
+        url = input("For Page: ")
+        name = input("Parameter name: ")
+        value = input("Parameter value: ")
+        self.project.addArg((name,value),url)
+
+    def wrapRemArg(self):
+        print(self.project.show('structure'))
+        url = input("For Page: ")
+        argID = input('Argument ID: ')
+        self.project.remArg(argID, url)
+
+    def wrapChangeArg(self):
+        print(self.project.show('structure'))
+        url = input("For Page: ")
+        pid = input("Parameter ID: ")
+        name = input("Parameter name: ")
+        value = input("Parameter value: ")
+        self.project.changeArg(pid, (name,value), url)
+
+
 
 if __name__ == "__main__":
 
-    name = input('Name: ')
-    description = input('Description: ')
+    discovering_website = Project()
+    load_or_new = input('Do you want to load a project from disk? (y/n) ')
+    if load_or_new == 'y':
+        path = input('Path: ')
+        discovering_website.load(path)
+    else:
+        name = input('Name: ')
+        description = input('Description: ')
+        discovering_website = Project(name, description)
 
-    TestWebSite = Project(name, description)
+    interface = ConsoleInterfaceWrapper(discovering_website)
 
 
     m_main = ConsoleMenu('WebSiDis console interface')
 
     m_notes = ConsoleMenu('Notes')
-    m_notes.append_item(FunctionItem('Add new note',tinput))
-    m_notes.append_item(FunctionItem('Remove existed note',tinput))
+    m_notes.append_item(FunctionItem('Add new note', interface.wrapAddNote))
+    m_notes.append_item(FunctionItem('Remove existed note', interface.wrapRemNote))
+    m_notes.append_item(FunctionItem('Show notes', discovering_website.show, ['notes']))
 
     m_related = ConsoleMenu('Sites')
-    m_related.append_item(FunctionItem('Add new related site',tinput))
-    m_related.append_item(FunctionItem('Remove existed related site',tinput))
+    m_related.append_item(FunctionItem('Add new related site', interface.wrapAddRelated))
+    m_related.append_item(FunctionItem('Remove existed related site', interface.wrapRemRelated))
+    m_related.append_item(FunctionItem('Show related sites', discovering_website.show, ['related']))
 
     m_structure = ConsoleMenu('Structure')
-    m_structure.append_item(FunctionItem('Add new page',tinput))
-    m_structure.append_item(FunctionItem('Add parameter to page',tinput))
-    m_structure.append_item(FunctionItem('Remove parameter from page',tinput))
-    m_structure.append_item(FunctionItem('Change parameter on page',tinput))
+    m_structure.append_item(FunctionItem('Add new page', interface.wrapAddPage))
+    m_structure.append_item(FunctionItem('Add parameter to page', interface.wrapAddArg))
+    m_structure.append_item(FunctionItem('Remove parameter from page', interface.wrapRemArg))
+    m_structure.append_item(FunctionItem('Change parameter on page',interface.wrapChangeArg))
+    m_structure.append_item(FunctionItem('Show structure', discovering_website.show, ['structure']))
 
     m_main.append_item(SubmenuItem('Notes', m_notes, menu=m_main))
     m_main.append_item(SubmenuItem('Related sites', m_related, menu=m_main))
