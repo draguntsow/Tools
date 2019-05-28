@@ -156,7 +156,7 @@ class ConsoleInterfaceWrapper(object):
         print(self.project.show('structure'))
         url = input("For Page: ")
         argID = input('Argument ID: ')
-        self.project.remArg(argID, url)
+        self.project.remArg(int(argID), url)
 
     def wrapChangeArg(self):
         print(self.project.show('structure'))
@@ -164,7 +164,7 @@ class ConsoleInterfaceWrapper(object):
         pid = input("Parameter ID: ")
         name = input("Parameter name: ")
         value = input("Parameter value: ")
-        self.project.changeArg(pid, (name,value), url)
+        self.project.changeArg(int(pid), [name,value], url)
 
     def wrapShow(self, what):
         print(self.project.show(what))
@@ -203,6 +203,7 @@ if __name__ == "__main__":
 
     m_structure = ConsoleMenu('Structure')
     m_structure.append_item(FunctionItem('Add new page', interface.wrapAddPage))
+    m_structure.append_item(FunctionItem('Remove page', interface.wrapRemPage))
     m_structure.append_item(FunctionItem('Add parameter to page', interface.wrapAddArg))
     m_structure.append_item(FunctionItem('Remove parameter from page', interface.wrapRemArg))
     m_structure.append_item(FunctionItem('Change parameter on page',interface.wrapChangeArg))
