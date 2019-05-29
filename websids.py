@@ -54,7 +54,7 @@ class Project(object):
         if url in self.structure:
             return -1
         else:
-            self.structure[url] = []
+            self.structure[url] = {} #UPDATE in 0.0.2
     
     def remPage(self, url):
         try: 
@@ -62,25 +62,30 @@ class Project(object):
         except KeyError:
             return -1
 
-    def addArg(self, param, url): #param is a tuple from name and value 
+    def addArg(self, url, method, key, value): #UPDATE in 0.0.2
         try:
-            self.structure[url].append(param)
+            self.structure[url]
         except KeyError:
             return -1
+        try:
+            self.structure[url][method].append((key,value))
+        except KeyError:
+            self.structure[url][method] = []
+            self.structure[url][method].append((key,value))
     
-    def remArg(self, paramID, url): #paramID is a number of param for URL
+    def remArg(self, url, method, paramID): #paramID is a number of param for URL
         try:
-            self.structure[url].pop(paramID)
+            self.structure[url][method].pop(paramID)
         except KeyError:
             return -1
 
-    def changeArg(self, paramID, param, url): #param is tuple
+    def changeArg(self, url, method, paramID, key, value):
         try:
-            self.structure[url][paramID] = param
+            self.structure[url][method][paramID] = (key,value)
         except KeyError:
             return -1
 
-    def show(self, what): #Show function is working properly!
+    def show(self, what): #Show function is working properly! Structure: {'url':{'method1':[(key,value),(key,value)], 'method2':[(key,value),(key,value)]}}
         toShow = ''
         if what == 'notes':
             for i in enumerate(self.notes):
@@ -92,9 +97,11 @@ class Project(object):
                 toShow += (str(i[0])+') '+i[1]+'\n\r')
         elif what == 'structure':
             for urlView in self.structure.items():
-                toShow+=urlView[0]+'\n\r'
-                for param in enumerate(urlView[1]):
-                    toShow+='    '+str(param[0])+') '+param[1][0]+': '+param[1][1]+'\n\r'
+                toShow+=urlView[0]+'\n\r' #print url 
+                for methodView in urlView[1].items():
+                    toShow+='    '+methodView[0]+'\n\r'
+                    for paramPair in enumerate(methodView[1]):
+                        toShow+='        '+str(paramPair[0])+') '+paramPair[1][0]+': '+paramPair[1][1]+'\n\r'
 
         return toShow
 
@@ -148,26 +155,32 @@ class ConsoleInterfaceWrapper(object):
 
     def wrapAddArg(self):
         url = input("For Page: ")
-        name = input("Parameter name: ")
+        method = input("For method: ")
+        key = input("Parameter name: ")
         value = input("Parameter value: ")
-        self.project.addArg((name,value),url)
+        self.project.addArg(url, method, key, value)
 
     def wrapRemArg(self):
         print(self.project.show('structure'))
         url = input("For Page: ")
-        argID = input('Argument ID: ')
-        self.project.remArg(int(argID), url)
+        method = input("For method: ")
+        pid = input('Parameter ID: ')
+        self.project.remArg(url, method, int(pid))
 
     def wrapChangeArg(self):
         print(self.project.show('structure'))
         url = input("For Page: ")
+        method = input("For method: ")
         pid = input("Parameter ID: ")
-        name = input("Parameter name: ")
+        key = input("Parameter name: ")
         value = input("Parameter value: ")
-        self.project.changeArg(int(pid), [name,value], url)
+        self.project.changeArg(url, method, int(pid), key, value)
 
     def wrapShow(self, what):
-        print(self.project.show(what))
+        try:
+            print(self.project.show(what))
+        except:
+            print(sys.exc_info())
         input('Press any key to back')
 
     def wrapSave(self):
